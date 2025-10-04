@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - TrainMath{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="mb-4">Admin Dashboard</h2>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="card text-white bg-primary shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Users</h5>
+                <p class="card-text">Total registered: {{ stats.total_users }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Exercises</h5>
+                <p class="card-text">Total attempts: {{ stats.total_attempts }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card text-white bg-info shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Accuracy</h5>
+                <p class="card-text">Avg. accuracy: {{ stats.avg_accuracy }}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="mt-4">Recent Activity</h4>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Score</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in recent_results %}
+            <tr>
+              <td>{{ r.user.username }}</td>
+              <td>{{ r.score }}</td>
+              <td>{{ r.created_at }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="text-center">No recent results</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

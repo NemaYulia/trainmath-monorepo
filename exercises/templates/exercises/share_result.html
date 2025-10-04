@@ -1,0 +1,13 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Shared Result</h2>
+    <p><b>Task:</b> {{ share.attempt.problem.question_text }}</p>
+    <p><b>User Answer:</b> {{ share.attempt.user_answer }}</p>
+    <p><b>Correct:</b> {% if share.attempt.is_correct %} ✅ {% else %} ❌ {% endif %}</p>
+    <p><b>Time:</b> {{ share.attempt.time_taken_ms }} ms</p>
+    <hr>
+    <p><i>Public link:</i> {{ request.build_absolute_uri }}</p>
+</div>
+{% endblock %}

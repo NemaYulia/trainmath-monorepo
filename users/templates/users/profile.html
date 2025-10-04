@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Hello, {{ user.username }}</h2>
+
+    <h4>📊 Your Statistics</h4>
+    <ul>
+        <li>Total attempts: {{ total }}</li>
+        <li>Accuracy: {{ accuracy }} %</li>
+        <li>Average time: {{ avg_time }} ms</li>
+    </ul>
+
+    <h4>📝 Recent Attempts</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Difficulty</th>
+                <th>Your Answer</th>
+                <th>Correct</th>
+                <th>Time (ms)</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for a in attempts %}
+        <tr>
+            <td>{{ a.problem.problem_type.name }}</td>
+            <td>{{ a.problem.difficulty }}</td>
+            <td>{{ a.user_answer }}</td>
+            <td>{% if a.is_correct %} ✅ {% else %} ❌ {% endif %}</td>
+            <td>{{ a.time_taken_ms }}</td>
+            <td>{{ a.created_at }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No attempts yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

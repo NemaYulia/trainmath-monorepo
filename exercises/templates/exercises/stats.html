@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>📊 Detailed Statistics</h2>
+    <table class="table table-bordered">
+        <tr>
+            <th>Type</th><th>Difficulty</th><th>Total</th><th>Correct</th><th>Accuracy %</th><th>Avg time (ms)</th>
+        </tr>
+        {% for row in by_type %}
+        <tr>
+            <td>{{ row.problem__problem_type__name }}</td>
+            <td>{{ row.problem__difficulty }}</td>
+            <td>{{ row.total }}</td>
+            <td>{{ row.correct }}</td>
+            <td>{{ row.correct|divisibleby:row.total|floatformat:2 }}</td>
+            <td>{{ row.avg_time|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No data yet.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

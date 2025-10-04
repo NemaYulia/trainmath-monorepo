@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Result - TrainMath{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body text-center">
+        {% if correct %}
+            <h2 class="text-success">✅ Correct!</h2>
+            <p class="lead">Great job!</p>
+        {% else %}
+            <h2 class="text-danger">❌ Incorrect</h2>
+            <p class="lead">Correct answer was: <strong>{{ correct_answer }}</strong></p>
+        {% endif %}
+
+        <a href="/question/" class="btn btn-primary mt-3">Next Question</a>
+        <a href="/" class="btn btn-outline-secondary mt-3">Home</a>
+    </div>
+</div>
+{% endblock %}
