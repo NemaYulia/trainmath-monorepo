@@ -1,8 +1,12 @@
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+
 from django.db.models import Avg, Count, Q
 from core.models import Attempt
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def exercises_home(request):
+    return render(request, "exercises/home.html")
 @login_required
 def stats_view(request):
     attempts = Attempt.objects.filter(user=request.user)

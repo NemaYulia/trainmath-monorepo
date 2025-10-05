@@ -17,13 +17,15 @@ Including another URLconf
 # trainmath/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from core.admin import admin_dashboard_view
 
 urlpatterns = [
+    # Custom admin dashboard MUST be before the default admin patterns
+    path("admin/dashboard/", admin.site.admin_view(admin_dashboard_view), name="admin_dashboard"),
     path("admin/", admin.site.urls),
     path("", include("core.urls")),        # головна і задачі
-    path("users/", include("users.urls")), # логін/реєстрація/профіль
-    path("exercises/", include("exercises.urls")), # статистика
-    path("profile/", include("users.urls")),
+    path("users/", include("users.urls", namespace="users")), # логін/реєстрація/профіль
+    path("exercises/", include("exercises.urls", namespace="exercises")), # статистика
 
 ]
 

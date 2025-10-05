@@ -13,7 +13,7 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)  # автоматичний вхід після реєстрації
-            return redirect("profile")
+            return redirect("users:profile")
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
@@ -25,7 +25,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect("profile")
+            return redirect("users:profile")
     else:
         form = LoginForm()
     return render(request, "users/login.html", {"form": form})
@@ -48,7 +48,7 @@ def profile_view(request):
 
     return render(request, "users/profile.html", {
         "user": user,
-        "attempts": attempts.order_by("-created_at")[:10],
+        "attempts": attempts.order_by("-timestamp")[:10],
         "accuracy": round(accuracy, 2),
         "avg_time": round(avg_time, 2) if avg_time else None,
         "total": total,

@@ -2,9 +2,59 @@
 {% block title %}Home - TrainMath{% endblock %}
 
 {% block content %}
-<div class="text-center">
-    <h1 class="mb-4">Welcome to TrainMath</h1>
-    <p class="lead">Practice mental math, algebra, derivatives and more!</p>
-    <a href="/question/" class="btn btn-primary btn-lg mt-3">Start Training</a>
+<div class="container">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">Welcome to TrainMath</h1>
+        <p class="lead">Practice mental math, algebra, derivatives and more!</p>
+        {% if not user.is_authenticated %}
+        <p class="text-muted">You can practice as a guest or <a href="{% url 'users:register' %}">register</a> to save your progress.</p>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% for type in types %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ type.name }}</h5>
+                    <p class="card-text">{{ type.description }}</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Difficulty:</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="difficulty-{{ type.slug }}" id="easy-{{ type.slug }}" value="1" checked>
+                            <label class="btn btn-outline-success" for="easy-{{ type.slug }}">Easy</label>
+                            
+                            <input type="radio" class="btn-check" name="difficulty-{{ type.slug }}" id="medium-{{ type.slug }}" value="2">
+                            <label class="btn btn-outline-warning" for="medium-{{ type.slug }}">Medium</label>
+                            
+                            <input type="radio" class="btn-check" name="difficulty-{{ type.slug }}" id="hard-{{ type.slug }}" value="3">
+                            <label class="btn btn-outline-danger" for="hard-{{ type.slug }}">Hard</label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100" onclick="startSession('{{ type.slug }}')">
+                        Start Practice
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4>No problem types available</h4>
+                <p>Please run the management command to populate problem types:</p>
+                <code>python manage.py populate_problem_types</code>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
+
+<script>
+function startSession(slug) {
+    const difficulty = document.querySelector(`input[name="difficulty-${slug}"]:checked`).value;
+    window.location.href = `/start/${slug}/?difficulty=${difficulty}`;
+}
+</script>
 {% endblock %}

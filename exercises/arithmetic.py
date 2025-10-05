@@ -9,46 +9,66 @@ class ArithmeticProblem(BaseProblem):
     name = 'Усна лічба'
 
     def generate(self, difficulty):
+        op = random.choice(['+', '-', '*', '/'])
+        return self._generate_op(op, difficulty)
+
+    def generate_division(self, difficulty):
+        return self._generate_op('/', difficulty)
+
+    def _generate_op(self, op: str, difficulty: int) -> dict:
+        # Select ranges per difficulty and operation
         if difficulty == 1:
-            rng = (1, 20); ops = ['+','-','*']; n = 2
+            if op in ['+', '-', '/']:
+                rng_a = (0, 50)
+                rng_b = (0, 50)
+            else:  # '*'
+                rng_a = (-20, 20)
+                rng_b = (-20, 20)
         elif difficulty == 2:
-            rng = (-50,50); ops = ['+','-','*','/']; n = 2
+            rng_a = (-20, 20)
+            rng_b = (-20, 20)
         else:
-            rng = (-200,200); ops = ['+','-','*','/']; n = random.choice([3,4])
+            rng_a = (-100, 100)
+            rng_b = (-100, 100)
 
-        operands = [random.randint(rng[0], rng[1]) for _ in range(n)]
-        operators = [random.choice(ops) for _ in range(n-1)]
+        if op == '+':
+            a = random.randint(*rng_a)
+            b = random.randint(*rng_b)
+            expr = sp.Integer(a) + sp.Integer(b)
+        elif op == '-':
+            a = random.randint(*rng_a)
+            b = random.randint(*rng_b)
+            expr = sp.Integer(a) - sp.Integer(b)
+        elif op == '*':
+            a = random.randint(*rng_a)
+            b = random.randint(*rng_b)
+            expr = sp.Integer(a) * sp.Integer(b)
+        else:  # '/'
+            # Build dividend as divisor * quotient to guarantee integer result
+            # Choose non-zero divisor in range_b
+            possible_divisors = [d for d in range(rng_b[0], rng_b[1] + 1) if d != 0]
+            b = random.choice(possible_divisors)
+            # Choose quotient in range_a
+            q = random.randint(rng_a[0], rng_a[1])
+            a = b * q
+            expr = sp.Integer(a) / sp.Integer(b)
 
-        # будувати вираз без eval для безпеки - через sympy
-        x = sp.Symbol('x')
-        expr = sp.Integer(operands[0])
-        for op, val in zip(operators, operands[1:]):
-            val_expr = sp.Integer(val)
-            if op == '+':
-                expr = expr + val_expr
-            elif op == '-':
-                expr = expr - val_expr
-            elif op == '*':
-                expr = expr * val_expr
-            elif op == '/':
-                # робимо дроби, уникаємо ділення на 0
-                if val == 0:
-                    val = 1
-                    val_expr = sp.Integer(1)
-                expr = expr / val_expr
+        ans = sp.simplify(expr)
+        canonical = str(int(ans)) if getattr(ans, 'is_integer', False) else str(ans)
 
-        # canonical_answer як строка (в раціональному вигляді або float)
-        try:
-            ans = sp.nsimplify(expr)  # зведе до дробу, якщо це можливо
-            canonical = str(ans)
-        except Exception:
-            canonical = str(float(expr))
+        if op == '+':
+            qtext = f"{a} + {b}"
+        elif op == '-':
+            qtext = f"{a} - {b}"
+        elif op == '*':
+            qtext = f"{a} * {b}"
+        else:
+            qtext = f"{a} / {b}"
 
-        question_text = str(expr)
         return {
-            'question': question_text,
+            'question': qtext,
             'canonical_answer': canonical,
-            'params': {'operands':operands, 'operators':operators}
+            'params': {'operands': [a, b], 'operators': [op], 'difficulty': difficulty}
         }
 
     def check(self, user_input, canonical_answer, params):

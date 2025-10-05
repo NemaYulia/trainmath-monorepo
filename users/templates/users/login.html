@@ -1,17 +1,24 @@
-{% extends "core/base.html" %}
+{% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% block title %}Login - TrainMath{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <h2 class="mb-4">Login</h2>
-            <form method="post">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <button type="submit" class="btn btn-primary">Login</button>
-                <a href="{% url 'register' %}" class="btn btn-link">Need an account? Register</a>
-            </form>
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="mb-4 text-center">Login</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                            <a href="{% url 'users:register' %}" class="btn btn-outline-success">Need an account? Register</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>

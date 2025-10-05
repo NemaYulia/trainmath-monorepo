@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     # third-party
     'crispy_forms',
+    'crispy_bootstrap4',
 
     # my apps
     'users',
@@ -163,6 +164,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Custom user model
 # =========================
 AUTH_USER_MODEL = 'users.CustomUser'
+
+# =========================
+# Authentication URLs
+# =========================
+LOGIN_REDIRECT_URL = '/users/profile/'
+LOGIN_URL = '/users/login/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 

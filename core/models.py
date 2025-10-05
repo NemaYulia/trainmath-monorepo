@@ -19,6 +19,7 @@ class ProblemInstance(models.Model):
     params = models.JSONField()
     question_text = models.TextField()
     canonical_answer = models.TextField()
+    multiple_choice_options = models.JSONField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
 class Attempt(models.Model):

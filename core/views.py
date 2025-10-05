@@ -5,12 +5,19 @@ from django.views.decorators.csrf import csrf_exempt
 
 from core.models import ProblemType, ProblemInstance, Attempt, ShareResult
 from exercises.arithmetic import ArithmeticProblem
+from exercises.algebraic import AlgebraicIdentitiesProblem
+from exercises.equations import EquationsProblem
+from exercises.calculus import DerivativesProblem, IntegralsProblem
 from django.http import HttpResponse
 
 # Реєстр генераторів задач
 # Додавай нові генератори сюди
 PROBLEM_REGISTRY = {
     'arithmetic': ArithmeticProblem(),
+    'algebraic': AlgebraicIdentitiesProblem(),
+    'equations': EquationsProblem(),  # Linear only
+    'derivatives': DerivativesProblem(),
+    'integrals': IntegralsProblem(),
 }
 
 
@@ -21,7 +28,9 @@ def home(request):
     """
     Домашня сторінка з вибором типу задач
     """
-    types = ProblemType.objects.all()
+    # Show only active problem types present in the registry
+    active_slugs = set(PROBLEM_REGISTRY.keys())
+    types = ProblemType.objects.filter(slug__in=active_slugs)
     return render(request, 'core/home.html', {'types': types})
 
 
@@ -31,7 +40,7 @@ def home(request):
 @require_http_methods(["GET"])
 def start_session(request, slug):
     """
-    Створює нову сесію задачі для обраного типу (slug).
+    Створює нову сесію з 12 задач для обраного типу (slug).
     """
     difficulty = int(request.GET.get('difficulty', 1))
 
@@ -40,24 +49,39 @@ def start_session(request, slug):
     if not gen:
         return redirect('home')
 
-    # Генеруємо дані задачі
-    data = gen.generate(difficulty)
-
-    # Зберегти в базу ProblemInstance
+    # Генеруємо 12 задач
     pt = get_object_or_404(ProblemType, slug=slug)
-    pi = ProblemInstance.objects.create(
-        problem_type=pt,
-        difficulty=difficulty,
-        params=data['params'],
-        question_text=data['question'],
-        canonical_answer=data['canonical_answer']
-    )
+    problem_instances = []
+    
+    ensure_division = True if slug in ['arithmetic'] else False
+    for i in range(12):
+        if ensure_division and i == 0:
+            # Guarantee at least one division with whole result
+            if hasattr(gen, 'generate_division'):
+                data = gen.generate_division(difficulty)
+            else:
+                data = gen.generate(difficulty)
+        else:
+            data = gen.generate(difficulty)
+        pi = ProblemInstance.objects.create(
+            problem_type=pt,
+            difficulty=difficulty,
+            params=data['params'],
+            question_text=data['question'],
+            canonical_answer=data['canonical_answer'],
+            multiple_choice_options=data.get('multiple_choice', None)
+        )
+        problem_instances.append(pi)
 
-    # Зберегти час у сесії
-    request.session['current_problem_id'] = pi.id
-    request.session['start_time'] = timezone.now().timestamp()
+    # Зберегти інформацію про сесію
+    request.session['session_problems'] = [pi.id for pi in problem_instances]
+    request.session['current_problem_index'] = 0
+    request.session['session_start_time'] = timezone.now().timestamp()
+    request.session['session_type'] = slug
+    request.session['session_difficulty'] = difficulty
 
-    return redirect('show_question', pk=pi.id)
+    # Перенаправити на перше питання
+    return redirect('show_question', pk=problem_instances[0].id)
 
 
 # =============================
@@ -84,7 +108,7 @@ def submit_answer(request, pk):
     pi = get_object_or_404(ProblemInstance, pk=pk)
     user_input = request.POST.get('answer', '').strip()
 
-    # Обчислити час виконання
+    # Обчислити час виконання для цього питання
     start_time = request.session.get('start_time')
     time_taken_ms = 0
     if start_time:
@@ -113,7 +137,19 @@ def submit_answer(request, pk):
     # Зберегти останній attempt у сесію
     request.session['last_attempt_id'] = attempt.id
 
-    return redirect('result', pk=attempt.id)
+    # Перевірити, чи це останнє питання в сесії
+    session_problems = request.session.get('session_problems', [])
+    current_index = request.session.get('current_problem_index', 0)
+    
+    if current_index + 1 < len(session_problems):
+        # Є ще питання, перейти до наступного
+        request.session['current_problem_index'] = current_index + 1
+        next_problem_id = session_problems[current_index + 1]
+        request.session['start_time'] = timezone.now().timestamp()  # Reset timer for next question
+        return redirect('show_question', pk=next_problem_id)
+    else:
+        # Сесія завершена, показати результати
+        return redirect('result', pk=attempt.id)
 
 
 # =============================
@@ -124,7 +160,23 @@ def result_view(request, pk):
     Показує результат спроби (Attempt).
     """
     attempt = get_object_or_404(Attempt, pk=pk)
-    return render(request, 'core/result.html', {'attempt': attempt})
+    # Collect all attempts in this session for this user/guest
+    # Determine the latest session for this user (or guest session id)
+    if attempt.user:
+        last_session = Attempt.objects.filter(user=attempt.user).order_by('-timestamp').values_list('session_id', flat=True).first()
+    else:
+        last_session = Attempt.objects.filter(session_id=attempt.session_id).order_by('-timestamp').values_list('session_id', flat=True).first()
+
+    attempts_list = Attempt.objects.filter(
+        session_id=last_session,
+        user=attempt.user,
+    ).order_by('timestamp')
+    total_ms = sum(a.time_taken_ms for a in attempts_list)
+    return render(request, 'core/result.html', {
+        'attempt': attempt,
+        'attempts_list': attempts_list,
+        'total_time_ms': total_ms,
+    })
 
 
 # =============================
@@ -147,7 +199,21 @@ def share_public(request, uuid):
     Відображає результат за унікальним посиланням (для шарингу).
     """
     sr = get_object_or_404(ShareResult, uuid=uuid)
-    return render(request, 'core/share_result.html', {'share': sr})
+    # Use the latest session for that user
+    if sr.attempt.user:
+        last_session = Attempt.objects.filter(user=sr.attempt.user).order_by('-timestamp').values_list('session_id', flat=True).first()
+    else:
+        last_session = sr.attempt.session_id
+    attempts_list = Attempt.objects.filter(
+        session_id=last_session,
+        user=sr.attempt.user,
+    ).order_by('timestamp')
+    total_ms = sum(a.time_taken_ms for a in attempts_list)
+    return render(request, 'core/share_result.html', {
+        'share': sr,
+        'attempts_list': attempts_list,
+        'total_time_ms': total_ms,
+    })
 # =============================
 # About page
 # =============================
@@ -160,6 +226,3 @@ def about(request):
 
 def question_list(request):
     return HttpResponse("Тут буде список питань.")
-
-def about(request):
-    return HttpResponse("Тут буде інформація про сайт.")

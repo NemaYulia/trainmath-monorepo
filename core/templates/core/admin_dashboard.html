@@ -2,64 +2,232 @@
 {% block title %}Admin Dashboard - TrainMath{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-md-12">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="mb-4">Admin Dashboard</h2>
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Admin Dashboard</h2>
 
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <div class="card text-white bg-primary shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title">Users</h5>
-                <p class="card-text">Total registered: {{ stats.total_users }}</p>
-              </div>
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Users</h5>
+                            <h3>{{ total_users }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Attempts</h5>
+                            <h3>{{ total_attempts }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Correct Attempts</h5>
+                            <h3>{{ correct_attempts }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Overall Accuracy</h5>
+                            <h3>{{ accuracy }}%</h3>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <div class="card text-white bg-success shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title">Exercises</h5>
-                <p class="card-text">Total attempts: {{ stats.total_attempts }}</p>
-              </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Statistics by Problem Type</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Total</th>
+                                            <th>Correct</th>
+                                            <th>Accuracy</th>
+                                            <th>Avg Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in stats_by_type %}
+                                        <tr>
+                                            <td>{{ stat.problem__problem_type__name }}</td>
+                                            <td>{{ stat.total }}</td>
+                                            <td>{{ stat.correct }}</td>
+                                            <td>
+                                                {% if stat.total > 0 %}
+                                                    {% widthratio stat.correct stat.total 100 %}%
+                                                {% else %}
+                                                    0%
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ stat.avg_time|floatformat:0 }} ms</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="5" class="text-center">No data</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Statistics by Difficulty</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Difficulty</th>
+                                            <th>Total</th>
+                                            <th>Correct</th>
+                                            <th>Accuracy</th>
+                                            <th>Avg Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in stats_by_difficulty %}
+                                        <tr>
+                                            <td>
+                                                {% if stat.problem__difficulty == 1 %}
+                                                    <span class="badge bg-success">Easy</span>
+                                                {% elif stat.problem__difficulty == 2 %}
+                                                    <span class="badge bg-warning">Medium</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Hard</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ stat.total }}</td>
+                                            <td>{{ stat.correct }}</td>
+                                            <td>
+                                                {% if stat.total > 0 %}
+                                                    {% widthratio stat.correct stat.total 100 %}%
+                                                {% else %}
+                                                    0%
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ stat.avg_time|floatformat:0 }} ms</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="5" class="text-center">No data</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <div class="card text-white bg-info shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title">Accuracy</h5>
-                <p class="card-text">Avg. accuracy: {{ stats.avg_accuracy }}%</p>
-              </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Recent Attempts</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Problem Type</th>
+                                            <th>Difficulty</th>
+                                            <th>Result</th>
+                                            <th>Time (ms)</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for attempt in recent_attempts %}
+                                        <tr>
+                                            <td>{{ attempt.user.username|default:"Guest" }}</td>
+                                            <td>{{ attempt.problem.problem_type.name }}</td>
+                                            <td>
+                                                {% if attempt.problem.difficulty == 1 %}
+                                                    <span class="badge bg-success">Easy</span>
+                                                {% elif attempt.problem.difficulty == 2 %}
+                                                    <span class="badge bg-warning">Medium</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Hard</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if attempt.is_correct %}
+                                                    <span class="badge bg-success">✓ Correct</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">✗ Incorrect</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ attempt.time_taken_ms|floatformat:0 }}</td>
+                                            <td>{{ attempt.timestamp|date:"M d, Y H:i" }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="6" class="text-center">No recent attempts</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Registered Users Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Total Attempts</th>
+                                            <th>Correct</th>
+                                            <th>Accuracy</th>
+                                            <th>Avg Time (ms)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in user_summaries %}
+                                        <tr>
+                                            <td>{{ s.user.username }}</td>
+                                            <td>{{ s.total }}</td>
+                                            <td>{{ s.correct }}</td>
+                                            <td>{{ s.accuracy }}%</td>
+                                            <td>{{ s.avg_time|floatformat:0 }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="5" class="text-center">No users</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <h4 class="mt-4">Recent Activity</h4>
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Score</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in recent_results %}
-            <tr>
-              <td>{{ r.user.username }}</td>
-              <td>{{ r.score }}</td>
-              <td>{{ r.created_at }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="3" class="text-center">No recent results</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}
